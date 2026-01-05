@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { promises as fs } from 'fs';
-import path from 'path';
-
-const STORAGE_FILE = path.join(process.cwd(), 'data', 'fanart.json');
+import { fanArtStorageServer } from '@/lib/fanart-storage-server';
 
 // POST - Vote on fan art (like/dislike)
 export async function POST(
@@ -21,19 +18,9 @@ export async function POST(
       );
     }
 
-    // Read current fan arts
-    let allFanArts;
-    try {
-      const data = await fs.readFile(STORAGE_FILE, 'utf-8');
-      allFanArts = JSON.parse(data);
-    } catch {
-      return NextResponse.json(
-        { error: 'Fan art not found' },
-        { status: 404 }
-      );
-    }
-
-    const fanArt = allFanArts.find((art: any) => art.id === id);
+    // Get current fan art
+    const allFanArts = await fanArtStorageServer.getAll();
+    const fanArt = allFanArts.find((art) => art.id === id);
 
     if (!fanArt) {
       return NextResponse.json(
@@ -45,18 +32,10 @@ export async function POST(
     // Update vote counts
     // Note: In Phase 2, this should track individual votes per user/IP to prevent abuse
     // For now, client handles vote removal/switching locally, server just increments
-    const updatedFanArt = {
-      ...fanArt,
+    const updatedFanArt = await fanArtStorageServer.update(id, {
       likes: voteType === 'like' ? (fanArt.likes || 0) + 1 : (fanArt.likes || 0),
       dislikes: voteType === 'dislike' ? (fanArt.dislikes || 0) + 1 : (fanArt.dislikes || 0),
-    };
-
-    // Update in storage
-    const index = allFanArts.findIndex((art: any) => art.id === id);
-    if (index !== -1) {
-      allFanArts[index] = updatedFanArt;
-      await fs.writeFile(STORAGE_FILE, JSON.stringify(allFanArts, null, 2));
-    }
+    });
 
     return NextResponse.json({ success: true, data: updatedFanArt });
   } catch (error) {

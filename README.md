@@ -33,4 +33,15 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
+### Vercel KV Setup (Required for Production)
+
+This project uses Vercel KV (Redis) for serverless-compatible data storage. To set it up:
+
+1. Go to your Vercel project dashboard
+2. Navigate to **Storage** → **Create Database** → **KV**
+3. Create a new KV database
+4. The environment variables `KV_REST_API_URL` and `KV_REST_API_TOKEN` will be automatically added to your project
+
+**Note:** The app will work locally without KV (returns empty/default data), but requires KV for production deployment on Vercel.
+
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.

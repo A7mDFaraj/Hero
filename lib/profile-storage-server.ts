@@ -1,8 +1,7 @@
 import { Profile } from '@/types';
-import { promises as fs } from 'fs';
-import path from 'path';
+import { kv } from '@vercel/kv';
 
-const STORAGE_FILE = path.join(process.cwd(), 'data', 'profile.json');
+const STORAGE_KEY = 'profile_data';
 
 // Default profile data
 const defaultProfile: Profile = {
@@ -18,36 +17,40 @@ const defaultProfile: Profile = {
   },
 };
 
-// Ensure data directory exists
-async function ensureDataDir() {
-  const dataDir = path.dirname(STORAGE_FILE);
-  try {
-    await fs.access(dataDir);
-  } catch {
-    await fs.mkdir(dataDir, { recursive: true });
-  }
-}
-
-// Server-side profile storage using JSON file
+// Server-side profile storage using Vercel KV (serverless-compatible)
+// TODO: Replace with NestJS API calls when backend is ready
+// Example: fetch(`${process.env.API_URL}/profile`)
 export const profileStorageServer = {
   // Get profile
   get: async (): Promise<Profile> => {
     try {
-      await ensureDataDir();
-      const data = await fs.readFile(STORAGE_FILE, 'utf-8');
-      return JSON.parse(data);
-    } catch {
-      // Return default if file doesn't exist
+      // Check if KV is configured (for Vercel deployment)
+      if (process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN) {
+        const data = await kv.get<Profile>(STORAGE_KEY);
+        return data || defaultProfile;
+      }
+      // Fallback: return default if KV not configured (local dev)
+      return defaultProfile;
+    } catch (error) {
+      console.error('Error reading profile from KV:', error);
       return defaultProfile;
     }
   },
 
   // Update profile
   update: async (profile: Partial<Profile>): Promise<Profile> => {
-    await ensureDataDir();
-    const current = await profileStorageServer.get();
-    const updated = { ...current, ...profile };
-    await fs.writeFile(STORAGE_FILE, JSON.stringify(updated, null, 2));
-    return updated;
+    try {
+      if (process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN) {
+        const current = await profileStorageServer.get();
+        const updated = { ...current, ...profile };
+        await kv.set(STORAGE_KEY, updated);
+        return updated;
+      }
+      // If KV not configured, merge with default and return (for local dev/testing)
+      return { ...defaultProfile, ...profile };
+    } catch (error) {
+      console.error('Error updating profile in KV:', error);
+      throw new Error('Failed to update profile');
+    }
   },
 };

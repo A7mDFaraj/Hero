@@ -1,5 +1,5 @@
 import { Profile } from '@/types';
-import { kv } from '@vercel/kv';
+import { Redis } from '@upstash/redis';
 
 const STORAGE_KEY = 'profile_data';
 
@@ -17,12 +17,31 @@ const defaultProfile: Profile = {
   },
 };
 
-// In-memory fallback for local development when KV is not configured
+// In-memory fallback for local development when Redis is not configured
 let inMemoryProfile: Profile | null = null;
 
-// Check if KV is configured
-const isKVConfigured = () => {
-  return !!(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN);
+// Initialize Redis client (supports both Vercel KV and Upstash Redis)
+const getRedisClient = () => {
+  // Try Upstash Redis first (recommended)
+  if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+    return new Redis({
+      url: process.env.UPSTASH_REDIS_REST_URL,
+      token: process.env.UPSTASH_REDIS_REST_TOKEN,
+    });
+  }
+  // Fallback to Vercel KV format (legacy support)
+  if (process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN) {
+    return new Redis({
+      url: process.env.KV_REST_API_URL,
+      token: process.env.KV_REST_API_TOKEN,
+    });
+  }
+  return null;
+};
+
+// Check if Redis is configured
+const isRedisConfigured = () => {
+  return !!getRedisClient();
 };
 
 // Server-side profile storage using Vercel KV (serverless-compatible)
@@ -32,14 +51,15 @@ export const profileStorageServer = {
   // Get profile
   get: async (): Promise<Profile> => {
     try {
-      if (isKVConfigured()) {
-        const data = await kv.get<Profile>(STORAGE_KEY);
+      const redis = getRedisClient();
+      if (redis) {
+        const data = await redis.get<Profile>(STORAGE_KEY);
         return data || defaultProfile;
       }
       // Fallback: use in-memory store or default for local dev
       return inMemoryProfile || defaultProfile;
     } catch (error) {
-      console.error('Error reading profile from KV:', error);
+      console.error('Error reading profile from Redis:', error);
       return inMemoryProfile || defaultProfile;
     }
   },
@@ -47,10 +67,11 @@ export const profileStorageServer = {
   // Update profile
   update: async (profile: Partial<Profile>): Promise<Profile> => {
     try {
-      if (isKVConfigured()) {
+      const redis = getRedisClient();
+      if (redis) {
         const current = await profileStorageServer.get();
         const updated = { ...current, ...profile };
-        await kv.set(STORAGE_KEY, updated);
+        await redis.set(STORAGE_KEY, updated);
         return updated;
       } else {
         // Fallback: use in-memory store for local dev
@@ -60,8 +81,8 @@ export const profileStorageServer = {
         return updated;
       }
     } catch (error) {
-      console.error('Error updating profile in KV:', error);
-      // Fallback: update in-memory store even if KV fails
+      console.error('Error updating profile in Redis:', error);
+      // Fallback: update in-memory store even if Redis fails
       const current = inMemoryProfile || defaultProfile;
       const updated = { ...current, ...profile };
       inMemoryProfile = updated;

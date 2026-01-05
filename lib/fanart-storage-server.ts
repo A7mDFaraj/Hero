@@ -1,14 +1,33 @@
 import { FanArt } from '@/types';
-import { kv } from '@vercel/kv';
+import { Redis } from '@upstash/redis';
 
 const STORAGE_KEY = 'fanart_gallery';
 
-// In-memory fallback for local development when KV is not configured
+// In-memory fallback for local development when Redis is not configured
 let inMemoryStore: FanArt[] = [];
 
-// Check if KV is configured
-const isKVConfigured = () => {
-  return !!(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN);
+// Initialize Redis client (supports both Vercel KV and Upstash Redis)
+const getRedisClient = () => {
+  // Try Upstash Redis first (recommended)
+  if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+    return new Redis({
+      url: process.env.UPSTASH_REDIS_REST_URL,
+      token: process.env.UPSTASH_REDIS_REST_TOKEN,
+    });
+  }
+  // Fallback to Vercel KV format (legacy support)
+  if (process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN) {
+    return new Redis({
+      url: process.env.KV_REST_API_URL,
+      token: process.env.KV_REST_API_TOKEN,
+    });
+  }
+  return null;
+};
+
+// Check if Redis is configured
+const isRedisConfigured = () => {
+  return !!getRedisClient();
 };
 
 // Server-side storage using Vercel KV (serverless-compatible)
@@ -18,14 +37,15 @@ export const fanArtStorageServer = {
   // Get all fan arts
   getAll: async (): Promise<FanArt[]> => {
     try {
-      if (isKVConfigured()) {
-        const data = await kv.get<FanArt[]>(STORAGE_KEY);
+      const redis = getRedisClient();
+      if (redis) {
+        const data = await redis.get<FanArt[]>(STORAGE_KEY);
         return data || [];
       }
       // Fallback: use in-memory store for local dev
       return inMemoryStore;
     } catch (error) {
-      console.error('Error reading fan arts from KV:', error);
+      console.error('Error reading fan arts from Redis:', error);
       // Fallback to in-memory on error
       return inMemoryStore;
     }
@@ -43,18 +63,19 @@ export const fanArtStorageServer = {
     };
 
     try {
-      if (isKVConfigured()) {
+      const redis = getRedisClient();
+      if (redis) {
         const all = await fanArtStorageServer.getAll();
         all.push(newFanArt);
-        await kv.set(STORAGE_KEY, all);
+        await redis.set(STORAGE_KEY, all);
       } else {
         // Fallback: use in-memory store for local dev
         inMemoryStore.push(newFanArt);
       }
       return newFanArt;
     } catch (error) {
-      console.error('Error saving fan art to KV:', error);
-      // Fallback: save to in-memory store even if KV fails
+      console.error('Error saving fan art to Redis:', error);
+      // Fallback: save to in-memory store even if Redis fails
       inMemoryStore.push(newFanArt);
       return newFanArt;
     }
@@ -63,7 +84,8 @@ export const fanArtStorageServer = {
   // Update fan art
   update: async (id: string, updates: Partial<FanArt>): Promise<FanArt> => {
     try {
-      if (isKVConfigured()) {
+      const redis = getRedisClient();
+      if (redis) {
         const all = await fanArtStorageServer.getAll();
         const index = all.findIndex((art) => art.id === id);
         
@@ -73,7 +95,7 @@ export const fanArtStorageServer = {
         
         const updated = { ...all[index], ...updates };
         all[index] = updated;
-        await kv.set(STORAGE_KEY, all);
+        await redis.set(STORAGE_KEY, all);
         
         return updated;
       } else {
@@ -87,7 +109,7 @@ export const fanArtStorageServer = {
         return updated;
       }
     } catch (error) {
-      console.error('Error updating fan art in KV:', error);
+      console.error('Error updating fan art in Redis:', error);
       throw error instanceof Error ? error : new Error('Failed to update fan art');
     }
   },
@@ -95,16 +117,17 @@ export const fanArtStorageServer = {
   // Delete fan art
   delete: async (id: string): Promise<void> => {
     try {
-      if (isKVConfigured()) {
+      const redis = getRedisClient();
+      if (redis) {
         const all = await fanArtStorageServer.getAll();
         const filtered = all.filter((art) => art.id !== id);
-        await kv.set(STORAGE_KEY, filtered);
+        await redis.set(STORAGE_KEY, filtered);
       } else {
         // Fallback: use in-memory store for local dev
         inMemoryStore = inMemoryStore.filter((art) => art.id !== id);
       }
     } catch (error) {
-      console.error('Error deleting fan art from KV:', error);
+      console.error('Error deleting fan art from Redis:', error);
       throw new Error('Failed to delete fan art');
     }
   },

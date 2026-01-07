@@ -584,10 +584,10 @@ export default function FuturisticHero({ profile }: FuturisticHeroProps) {
             opacity,
           }}
         >
-            {/* Subtitle Text - Rendered as whole text for proper Arabic connection */}
+            {/* Subtitle Text - Rendered as whole text for proper Arabic connection - Centered */}
             {profile.subtitle && (
               <motion.h2
-                className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6"
+                className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 text-center w-full"
                 dir="auto"
                 initial={{ opacity: 0, y: 50, filter: 'blur(20px)' }}
                 animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
@@ -601,9 +601,11 @@ export default function FuturisticHero({ profile }: FuturisticHeroProps) {
                   color: 'rgba(167, 139, 250, 1)',
                   fontFamily: 'system-ui, -apple-system, sans-serif',
                   unicodeBidi: 'plaintext',
+                  textAlign: 'center',
+                  width: '100%',
                 }}
               >
-                <span className="block purple-glow text-[var(--purple-primary)]">
+                <span className="block purple-glow text-[var(--purple-primary)] text-center">
                   {profile.subtitle}
                 </span>
               </motion.h2>
@@ -729,28 +731,32 @@ export default function FuturisticHero({ profile }: FuturisticHeroProps) {
                     fill="none"
                   >
                     {(() => {
-                      const startX = badgePosition.x;
-                      const startY = badgePosition.y;
-                      // Use actual note position from ref
-                      const endX = notePosition.x;
-                      const endY = notePosition.y;
+                      // Start from the BOTTOM of the badge button (center-bottom)
+                      const startX = badgePosition.x - (badgePosition.width / 2); // Center horizontally
+                      const startY = badgePosition.y + (badgePosition.height / 1000000); // Bottom of button
+                      // Point to the RIGHT EDGE of the note (closer, not center)
+                      const endX = notePosition.x + (notePosition.width / 2) - 1; // Close to right edge
+                      const endY = notePosition.y - 5; // Slightly above center for better visual
                       
-                      // Create wobbly, hand-drawn curve with multiple control points
-                      const midX1 = startX * 0.6;
-                      const midY1 = startY + 40;
-                      const midX2 = startX * 0.35;
-                      const midY2 = (startY + endY) / 2;
-                      const midX3 = endX + 80;
-                      const midY3 = endY - 30;
+                      // Create natural, curved path starting from bottom going down then curving to note
+                      // First curve: goes down and slightly left from button bottom
+                      const midX1 = startX - 40;
+                      const midY1 = startY + 50; // Go down first
+                      // Second curve: continues down and curves left toward note
+                      const midX2 = startX * 0.4;
+                      const midY2 = startY + 80; // Continue going down
+                      // Third curve: curves up and left toward note
+                      const midX3 = endX - 30;
+                      const midY3 = endY + 20; // Approach note from below
                       
                       return (
                         <>
-                          {/* Main hand-drawn arrow path with wobbly curves - MUCH MORE VISIBLE */}
+                          {/* Main hand-drawn arrow path - starts from button edge, natural curved path */}
                           <path
                             d={`M ${startX} ${startY} 
-                               Q ${midX1 + 5} ${midY1 - 5}, ${midX1} ${midY1}
-                               Q ${midX2 + 3} ${midY2}, ${midX2 - 2} ${midY2 + 8}
-                               Q ${midX3} ${midY3}, ${endX} ${endY}`}
+                               C ${startX - 30} ${startY + 10}, ${midX1} ${midY1}, ${midX1} ${midY1}
+                               C ${midX1 - 20} ${midY1 + 15}, ${midX2} ${midY2}, ${midX2} ${midY2}
+                               C ${midX2 - 10} ${midY2 + 10}, ${midX3} ${midY3}, ${endX} ${endY}`}
                             stroke="#A78BFA"
                             strokeWidth="5"
                             strokeLinecap="round"
@@ -762,12 +768,12 @@ export default function FuturisticHero({ profile }: FuturisticHeroProps) {
                             }}
                           />
                           
-                          {/* Overlapping sketch lines for hand-drawn effect - MORE VISIBLE */}
+                          {/* Overlapping sketch lines for hand-drawn effect */}
                           <path
-                            d={`M ${startX + 4} ${startY + 3} 
-                               Q ${midX1 + 10} ${midY1 - 2}, ${midX1 + 3} ${midY1 + 4}
-                               Q ${midX2 + 8} ${midY2 + 3}, ${midX2 + 1} ${midY2 + 10}
-                               Q ${midX3 - 3} ${midY3 + 5}, ${endX + 2} ${endY - 2}`}
+                            d={`M ${startX + 3} ${startY + 2} 
+                               C ${startX - 25} ${startY + 12}, ${midX1 + 5} ${midY1 + 3}, ${midX1 + 5} ${midY1 + 3}
+                               C ${midX1 - 15} ${midY1 + 18}, ${midX2 + 5} ${midY2 + 5}, ${midX2 + 5} ${midY2 + 5}
+                               C ${midX2 - 5} ${midY2 + 15}, ${midX3 - 5} ${midY3 + 3}, ${endX + 2} ${endY - 2}`}
                             stroke="#A78BFA"
                             strokeWidth="3.5"
                             strokeLinecap="round"
@@ -776,10 +782,10 @@ export default function FuturisticHero({ profile }: FuturisticHeroProps) {
                             style={{ opacity: 0.7 }}
                           />
                           
-                          {/* Thin sketchy lines for texture - MORE VISIBLE */}
+                          {/* Thin sketchy lines for texture */}
                           <path
-                            d={`M ${startX - 3} ${startY - 2} 
-                               Q ${midX1 - 5} ${midY1 - 10}, ${midX1 - 3} ${midY1 - 3}`}
+                            d={`M ${startX - 2} ${startY - 1} 
+                               C ${startX - 35} ${startY + 8}, ${midX1 - 5} ${midY1 - 2}, ${midX1 - 5} ${midY1 - 2}`}
                             stroke="#A78BFA"
                             strokeWidth="2.5"
                             strokeLinecap="round"
@@ -788,8 +794,8 @@ export default function FuturisticHero({ profile }: FuturisticHeroProps) {
                           />
                           
                           <path
-                            d={`M ${midX2 + 12} ${midY2 - 6} 
-                               Q ${midX3 + 10} ${midY3 - 4}, ${endX - 5} ${endY - 10}`}
+                            d={`M ${midX2 + 8} ${midY2 - 3} 
+                               C ${midX2 - 8} ${midY2 + 8}, ${midX3 - 8} ${midY3 - 2}, ${endX - 5} ${endY - 10}`}
                             stroke="#A78BFA"
                             strokeWidth="2.5"
                             strokeLinecap="round"
@@ -797,43 +803,55 @@ export default function FuturisticHero({ profile }: FuturisticHeroProps) {
                             style={{ opacity: 0.45 }}
                           />
                           
-                          {/* Hand-drawn arrow head - imperfect and wobbly - MORE VISIBLE - Points directly to note center */}
+                          {/* Bigger, more visible arrow head - points close to note edge */}
                           <path
                             d={`M ${endX} ${endY} 
-                               L ${endX - 10} ${endY + 8} 
-                               L ${endX - 5} ${endY + 10} 
-                               L ${endX + 8} ${endY + 6} 
-                               L ${endX + 6} ${endY + 2}
+                               L ${endX - 20} ${endY + 15} 
+                               L ${endX - 10} ${endY + 18} 
+                               L ${endX + 18} ${endY + 12} 
+                               L ${endX + 15} ${endY + 5}
                                Z`}
                             stroke="#A78BFA"
-                            strokeWidth="4"
+                            strokeWidth="5"
                             strokeLinecap="round"
                             strokeLinejoin="round"
-                            fill="rgba(167, 139, 250, 0.6)"
+                            fill="rgba(167, 139, 250, 0.8)"
                             style={{
-                              filter: 'drop-shadow(0 0 12px rgba(167, 139, 250, 1)) drop-shadow(0 0 24px rgba(167, 139, 250, 0.8))'
+                              filter: 'drop-shadow(0 0 15px rgba(167, 139, 250, 1)) drop-shadow(0 0 30px rgba(167, 139, 250, 0.9))',
                             }}
                           />
                           
-                          {/* Extra arrow head outline for sketchy feel */}
+                          {/* Extra arrow head outline for sketchy feel - bigger */}
                           <path
-                            d={`M ${endX - 8} ${endY + 8} 
-                               L ${endX + 6} ${endY + 3}`}
+                            d={`M ${endX - 18} ${endY + 15} 
+                               L ${endX + 15} ${endY + 5}`}
                             stroke="#A78BFA"
-                            strokeWidth="2.5"
+                            strokeWidth="3.5"
                             strokeLinecap="round"
-                            style={{ opacity: 0.6 }}
+                            style={{ opacity: 0.7 }}
                           />
                           
-                          {/* Small starting point extension from badge - MORE VISIBLE */}
+                          {/* Inner arrow head detail for more visibility */}
+                          <path
+                            d={`M ${endX} ${endY} 
+                               L ${endX - 8} ${endY + 6} 
+                               L ${endX + 8} ${endY + 4}
+                               Z`}
+                            fill="rgba(167, 139, 250, 0.9)"
+                            style={{
+                              filter: 'drop-shadow(0 0 8px rgba(167, 139, 250, 1))'
+                            }}
+                          />
+                          
+                          {/* Starting point extension from badge bottom - MORE VISIBLE */}
                           <circle
                             cx={startX}
                             cy={startY}
-                            r="5"
+                            r="6"
                             fill="#A78BFA"
                             style={{
-                              filter: 'drop-shadow(0 0 8px rgba(167, 139, 250, 1)) drop-shadow(0 0 16px rgba(167, 139, 250, 0.8))',
-                              opacity: 0.9
+                              filter: 'drop-shadow(0 0 10px rgba(167, 139, 250, 1)) drop-shadow(0 0 20px rgba(167, 139, 250, 0.8))',
+                              opacity: 0.95
                             }}
                           />
                         </>

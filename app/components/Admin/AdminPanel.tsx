@@ -495,6 +495,9 @@ export default function AdminPanel({}: AdminPanelProps) {
                 placeholder="https://cloudinary.com/... or https://drive.google.com/..."
               />
               <p className="text-xs text-[var(--purple-glow)]/60">Supports Cloudinary URLs, Google Drive links, or direct URLs</p>
+              <p className="text-xs text-[var(--purple-primary)]/80 mt-1 font-semibold">
+                Recommended: Images 1920x1080 (16:9) or 1920x1333 (3:2) • Videos 1920x1080 (16:9) MP4, max 100MB
+              </p>
             </div>
           </div>
 

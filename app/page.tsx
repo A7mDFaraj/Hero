@@ -85,7 +85,7 @@ export default function Home() {
     };
   }, []);
 
-  // Transform featured works for 3D gallery
+  // Transform featured works for 3D gallery - only use uploaded images
   type ImageData = {
     id: string;
     url: string;
@@ -94,25 +94,14 @@ export default function Home() {
     posterUrl?: string;
   };
 
-  const galleryImages: ImageData[] = featuredWorks.length > 0
-    ? featuredWorks.map((work) => ({
-        id: work.id,
-        url: work.url,
-        title: work.title,
-        kind: work.kind as 'image' | 'video' | 'gif',
-        posterUrl: work.posterUrl,
-      }))
-    : [];
-
-  // If no featured works, use placeholder images
-  const displayImages: ImageData[] = galleryImages.length > 0 
-    ? galleryImages 
-    : [
-        { id: '1', url: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=400', title: 'Gaming', kind: 'image' as const },
-        { id: '2', url: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?w=400', title: 'Streaming', kind: 'image' as const },
-        { id: '3', url: 'https://images.unsplash.com/photo-1493711662062-fa541adb3fc8?w=400', title: 'Community', kind: 'image' as const },
-        { id: '4', url: 'https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=400', title: 'Gaming Setup', kind: 'image' as const },
-      ];
+  // Only use uploaded featured works - no placeholders
+  const displayImages: ImageData[] = featuredWorks.map((work) => ({
+    id: work.id,
+    url: work.url,
+    title: work.title,
+    kind: work.kind as 'image' | 'video' | 'gif',
+    posterUrl: work.posterUrl,
+  }));
 
   return (
     <main className="min-h-screen">

@@ -1,8 +1,9 @@
 'use client';
 
 import { useRef, useEffect, useState } from 'react';
-import { motion, useInView } from 'framer-motion';
+import { motion, useInView, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
+import { X, Volume2, VolumeX } from 'lucide-react';
 
 interface ImageData {
   id: string;
@@ -25,77 +26,29 @@ export default function Flying3DImages({ images, title, subtitle }: Flying3DImag
   const ringRef = useRef<HTMLDivElement>(null);
   const isHoveringRef = useRef(false);
   const [rotation, setRotation] = useState(0);
+  const [selectedVideo, setSelectedVideo] = useState<ImageData | null>(null);
+  const [isMuted, setIsMuted] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const isInView = useInView(sectionRef, { once: true, amount: 0.1 });
+  
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // High-quality placeholder images matching the style
-  const placeholderImages: ImageData[] = [
-    { 
-      id: 'p1', 
-      url: 'https://images.unsplash.com/photo-1568605117035-2fe696e5c82c?w=1200&q=90', 
-      title: 'Futuristic Car',
-      kind: 'image',
-    },
-    { 
-      id: 'p2', 
-      url: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1200&q=90', 
-      title: 'Abstract Art',
-      kind: 'image',
-    },
-    { 
-      id: 'p3', 
-      url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&q=90', 
-      title: 'Beach Scene',
-      kind: 'image',
-    },
-    { 
-      id: 'p4', 
-      url: 'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=1200&q=90', 
-      title: 'Space Helmet',
-      kind: 'image',
-    },
-    { 
-      id: 'p5', 
-      url: 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=1200&q=90', 
-      title: 'Gradient',
-      kind: 'image',
-    },
-    { 
-      id: 'p6', 
-      url: 'https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=1200&q=90', 
-      title: 'Cityscape',
-      kind: 'image',
-    },
-    { 
-      id: 'p7', 
-      url: 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=1200&q=90', 
-      title: 'Sports Car',
-      kind: 'image',
-    },
-    // Short high-quality MP4 demo (public domain - MDN)
-    {
-      id: 'v1',
-      url: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
-      title: 'Short Video Demo',
-      kind: 'video',
-      posterUrl: 'https://images.unsplash.com/photo-1501004318641-b39e6451bec6?w=1200&q=80',
-    },
-    // Animated GIF demo
-    {
-      id: 'g1',
-      url: 'https://media.giphy.com/media/xT9IgzoKnwFNmISR8I/giphy.gif',
-      title: 'GIF Demo',
-      kind: 'gif',
-    },
-  ];
-  
-  const displayImages: ImageData[] = images.length >= 5 
-    ? images.slice(0, 7) 
-    : images.length > 0
-      ? [...images, ...placeholderImages.slice(0, Math.max(0, 7 - images.length))]
-      : placeholderImages;
+  // Close modal on Escape key
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && selectedVideo) {
+        setSelectedVideo(null);
+      }
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [selectedVideo]);
+
+  // Use only uploaded images - no placeholders
+  // If no images, show empty state or hide section
+  const displayImages: ImageData[] = images;
 
   // Continuous rotation loop for circular carousel
   useEffect(() => {
@@ -110,7 +63,6 @@ export default function Flying3DImages({ images, title, subtitle }: Flying3DImag
     return () => cancelAnimationFrame(raf);
   }, [isInView]);
 
-  // Always show component, use placeholders if needed
   if (!mounted) {
     return (
       <section className="relative min-h-[600px] w-full py-12 px-4 bg-[var(--background)] z-10">
@@ -121,9 +73,20 @@ export default function Flying3DImages({ images, title, subtitle }: Flying3DImag
     );
   }
 
-  // Circle parameters
+  // Circle parameters - adjust radius based on number of images for better spacing
   const N = displayImages.length;
-  const radius = 520;
+  // Dynamic radius: more images = smaller radius, fewer images = larger radius (more gap)
+  // Minimum 3 items: radius 520, scales up for fewer items
+  const baseRadius = 520;
+  const minItems = 3;
+  const radius = N < minItems 
+    ? baseRadius + (minItems - N) * 80  // Increase radius by 80px for each missing item
+    : baseRadius;
+
+  // Don't render section if no images
+  if (displayImages.length === 0) {
+    return null;
+  }
 
   return (
     <section 
@@ -204,6 +167,7 @@ export default function Flying3DImages({ images, title, subtitle }: Flying3DImag
                     height={height}
                     depthOpacity={depthOpacity}
                     scale={scale}
+                    onVideoClick={(img) => setSelectedVideo(img)}
                   />
                 );
               })}
@@ -211,11 +175,91 @@ export default function Flying3DImages({ images, title, subtitle }: Flying3DImag
           </motion.div>
         </div>
       </div>
+
+      {/* Video Modal - Fullscreen with sound */}
+      <AnimatePresence>
+        {selectedVideo && selectedVideo.kind === 'video' && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[9999] bg-black/95 backdrop-blur-md flex items-center justify-center p-4"
+            onClick={() => setSelectedVideo(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className="relative w-full max-w-6xl aspect-video bg-black rounded-xl overflow-hidden shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <video
+                ref={videoRef}
+                src={selectedVideo.url}
+                poster={selectedVideo.posterUrl}
+                autoPlay
+                controls
+                muted={isMuted}
+                className="w-full h-full object-contain"
+                onEnded={() => {
+                  if (videoRef.current) {
+                    videoRef.current.currentTime = 0;
+                    videoRef.current.play();
+                  }
+                }}
+              />
+              
+              {/* Close Button */}
+              <button
+                onClick={() => {
+                  if (videoRef.current) {
+                    videoRef.current.pause();
+                    videoRef.current.currentTime = 0;
+                  }
+                  setSelectedVideo(null);
+                  setIsMuted(false);
+                }}
+                className="absolute top-4 right-4 z-10 p-3 bg-black/70 hover:bg-black/90 rounded-full transition-all duration-300 hover:scale-110"
+                aria-label="Close video"
+              >
+                <X className="w-6 h-6 text-white" />
+              </button>
+
+              {/* Mute/Unmute Toggle */}
+              <button
+                onClick={() => setIsMuted(!isMuted)}
+                className="absolute top-4 left-4 z-10 p-3 bg-black/70 hover:bg-black/90 rounded-full transition-all duration-300 hover:scale-110"
+                aria-label={isMuted ? 'Unmute' : 'Mute'}
+              >
+                {isMuted ? (
+                  <VolumeX className="w-6 h-6 text-white" />
+                ) : (
+                  <Volume2 className="w-6 h-6 text-white" />
+                )}
+              </button>
+
+              {/* Video Title */}
+              {selectedVideo.title && (
+                <div className="absolute bottom-4 left-4 right-4 z-10">
+                  <h3 className="text-white text-xl font-bold bg-black/70 px-4 py-2 rounded-lg backdrop-blur-sm">
+                    {selectedVideo.title}
+                  </h3>
+                </div>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 }
 
 // Circular Image Card
+// Recommended sizes for uploads:
+// - Images: 1920x1080 (16:9) or 1920x1333 (3:2) - will be displayed at 520x360px
+// - Videos: 1920x1080 (16:9) recommended - MP4 format, max 100MB
+// - GIFs: 1920x1080 or smaller for better performance
 function CircularImageCard({
   image,
   angle,
@@ -224,6 +268,7 @@ function CircularImageCard({
   height,
   depthOpacity,
   scale,
+  onVideoClick,
 }: {
   image: ImageData;
   angle: number;
@@ -232,6 +277,7 @@ function CircularImageCard({
   height: number;
   depthOpacity: number;
   scale: number;
+  onVideoClick?: (image: ImageData) => void;
 }) {
   const transform = `rotateY(${angle}rad) translateZ(${radius}px) scale(${scale})`;
   // Infer media kind if not explicitly provided
@@ -258,21 +304,43 @@ function CircularImageCard({
         transformStyle: 'preserve-3d',
         transform,
       }}
-      className="group cursor-pointer"
+      className={`group ${inferredKind === 'video' ? 'cursor-pointer' : ''}`}
+      onClick={() => {
+        if (inferredKind === 'video' && onVideoClick) {
+          onVideoClick(image);
+        }
+      }}
     >
       {/* Image Container */}
       <div className="relative w-full h-full rounded-xl overflow-hidden border-2 border-[var(--purple-primary)]/30 bg-[var(--purple-darker)]/50 backdrop-blur-sm shadow-[0_0_30px_rgba(124,58,237,0.3)] hover:shadow-[0_0_50px_rgba(124,58,237,0.6)] transition-all duration-300">
         <div className="relative w-full h-full overflow-hidden">
           {inferredKind === 'video' ? (
-            <video
-              src={image.url}
-              poster={image.posterUrl}
-              autoPlay
-              loop
-              muted
-              playsInline
-              className="absolute inset-0 w-full h-full object-cover"
-            />
+            <>
+              <video
+                src={image.url}
+                poster={image.posterUrl}
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+              {/* Play Button Overlay for Videos */}
+              <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/30 transition-all duration-300">
+                <div className="w-20 h-20 rounded-full bg-[var(--purple-primary)]/80 backdrop-blur-sm flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-[0_0_30px_rgba(124,58,237,0.8)]">
+                  <svg
+                    className="w-10 h-10 text-white ml-1"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                </div>
+                <p className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white text-sm font-semibold bg-black/60 px-3 py-1 rounded-full backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  Click to play with sound
+                </p>
+              </div>
+            </>
           ) : inferredKind === 'gif' ? (
             <img
               src={image.url}

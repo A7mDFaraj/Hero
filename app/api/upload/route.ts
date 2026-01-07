@@ -30,19 +30,23 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate file type
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-    if (!allowedTypes.includes(file.type)) {
+    const allowedImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    const allowedVideoTypes = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo'];
+    const isImage = allowedImageTypes.includes(file.type);
+    const isVideo = allowedVideoTypes.includes(file.type);
+    
+    if (!isImage && !isVideo) {
       return NextResponse.json(
-        { error: 'Invalid file type. Only JPEG, PNG, GIF, and WEBP are allowed.' },
+        { error: 'Invalid file type. Only images (JPEG, PNG, GIF, WEBP) and videos (MP4, WEBM, MOV, AVI) are allowed.' },
         { status: 400 }
       );
     }
 
-    // Validate file size (10MB max)
-    const MAX_SIZE = 10 * 1024 * 1024;
+    // Validate file size (100MB max for videos, 10MB for images)
+    const MAX_SIZE = isVideo ? 100 * 1024 * 1024 : 10 * 1024 * 1024;
     if (file.size > MAX_SIZE) {
       return NextResponse.json(
-        { error: `File size too large. Maximum size is 10MB. Your file is ${(file.size / 1024 / 1024).toFixed(2)}MB.` },
+        { error: `File size too large. Maximum size is ${isVideo ? '100MB' : '10MB'}. Your file is ${(file.size / 1024 / 1024).toFixed(2)}MB.` },
         { status: 400 }
       );
     }
@@ -56,20 +60,28 @@ export async function POST(request: NextRequest) {
     const isProfileImage = uploadType === 'profile';
     const folder = isProfileImage 
       ? 'streamer-website/profile' 
-      : 'streamer-website/fanart-gallery';
+      : isVideo
+        ? 'streamer-website/featured-works'
+        : 'streamer-website/fanart-gallery';
     const tags = isProfileImage
       ? ['streamer-website-profile', 'profile-image']
-      : ['streamer-website-fanart', 'fanart-gallery'];
+      : isVideo
+        ? ['streamer-website-featured', 'featured-works']
+        : ['streamer-website-fanart', 'fanart-gallery'];
+    
+    const resourceType = isVideo ? 'video' : 'image';
     const transformation = isProfileImage
       ? [{ width: 400, height: 400, crop: 'fill', gravity: 'face', quality: 'auto' }]
-      : [{ width: 1200, height: 1200, crop: 'limit', quality: 'auto' }];
+      : isVideo
+        ? [{ quality: 'auto', format: 'mp4' }]
+        : [{ width: 1200, height: 1200, crop: 'limit', quality: 'auto' }];
 
     const uploadResult = await new Promise((resolve, reject) => {
       const uploadStream = cloudinary.uploader.upload_stream(
         {
           folder,
           tags,
-          resource_type: 'image',
+          resource_type: resourceType,
           transformation,
         },
         (error, result) => {

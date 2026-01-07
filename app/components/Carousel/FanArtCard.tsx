@@ -108,8 +108,8 @@ export default function FanArtCard({ fanArt }: FanArtCardProps) {
   };
 
   return (
-    <div className="group relative h-full w-full rounded-xl overflow-hidden bg-[var(--purple-darker)]/50 border border-[var(--purple-primary)]/30 hover:border-[var(--purple-primary)] transition-all duration-300 hover:shadow-[0_0_30px_rgba(124,58,237,0.5)]">
-      <div className="relative h-80 w-full overflow-hidden">
+    <div className="group relative h-full w-full rounded-xl overflow-hidden bg-[var(--purple-darker)]/50 border-2 border-[var(--purple-primary)]/30 hover:border-[var(--purple-primary)] transition-all duration-300 hover:shadow-[0_0_30px_rgba(124,58,237,0.5)]">
+      <div className="relative h-[420px] md:h-[500px] w-full overflow-hidden">
         {imageSrc.startsWith('data:') || imageError ? (
           // For base64 images (localStorage) or error fallback, use regular img tag
           <img
@@ -130,6 +130,16 @@ export default function FanArtCard({ fanArt }: FanArtCardProps) {
           />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-[var(--purple-darker)]/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        {/* AI scan overlay (visible when slide active via parent CSS) */}
+        <div
+          className="ai-scan pointer-events-none absolute inset-x-0 top-0 h-1/3 opacity-0"
+          style={{
+            background:
+              'linear-gradient(to bottom, rgba(167,139,250,0.0), rgba(167,139,250,0.35), rgba(167,139,250,0.0))',
+            filter: 'blur(8px)',
+            mixBlendMode: 'screen',
+          }}
+        />
       </div>
 
       <div className="p-4 space-y-2">

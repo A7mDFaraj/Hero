@@ -3,6 +3,10 @@ export interface Profile {
   bio: string;
   avatar: string;
   twitchStatus: 'live' | 'offline';
+  mainText?: string; // Main hero text (defaults to name if not set)
+  subtitle?: string; // Subtitle text below main text
+  featuredWorksTitle?: string; // Title for Featured Works section
+  featuredWorksSubtitle?: string; // Subtitle for Featured Works section
   socialLinks: {
     twitch?: string;
     twitter?: string;
@@ -11,6 +15,16 @@ export interface Profile {
     instagram?: string;
     discord?: string;
   };
+}
+
+export interface FeaturedWork {
+  id: string;
+  url: string;
+  title?: string;
+  kind: 'image' | 'video' | 'gif';
+  posterUrl?: string; // For video thumbnails
+  isActive?: boolean;
+  createdAt?: string;
 }
 
 export interface FanArt {

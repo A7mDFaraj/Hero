@@ -20,7 +20,7 @@ export async function GET() {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, bio, avatar, twitchStatus, socialLinks } = body;
+    const { name, bio, avatar, twitchStatus, mainText, subtitle, featuredWorksTitle, featuredWorksSubtitle, socialLinks } = body;
 
     // Validation
     if (name && typeof name !== 'string') {
@@ -72,6 +72,10 @@ export async function PUT(request: NextRequest) {
       ...(bio && { bio }),
       ...(avatar && { avatar }),
       ...(twitchStatus && { twitchStatus }),
+      ...(mainText !== undefined && { mainText }),
+      ...(subtitle !== undefined && { subtitle }),
+      ...(featuredWorksTitle !== undefined && { featuredWorksTitle }),
+      ...(featuredWorksSubtitle !== undefined && { featuredWorksSubtitle }),
       ...(socialLinks && { socialLinks }),
     });
 

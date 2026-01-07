@@ -9,6 +9,10 @@ const defaultProfile: Profile = {
   bio: 'Gaming content creator and streamer. Join me for epic adventures and unforgettable moments!',
   avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=HEROOXR',
   twitchStatus: 'offline',
+  mainText: 'HEROOXR',
+  subtitle: 'حياكم الله ياحلوين في البث',
+  featuredWorksTitle: 'Featured Works',
+  featuredWorksSubtitle: '© Digital Showcase',
   socialLinks: {
     twitch: 'https://twitch.tv/herooxr',
     twitter: 'https://twitter.com/HEROOXR',

@@ -13,6 +13,10 @@ export default function ProfileManager({}: ProfileManagerProps) {
     bio: '',
     avatar: '',
     twitchStatus: 'offline' as 'live' | 'offline',
+    mainText: '',
+    subtitle: '',
+    featuredWorksTitle: '',
+    featuredWorksSubtitle: '',
     socialLinks: {
       twitch: '',
       twitter: '',
@@ -46,6 +50,10 @@ export default function ProfileManager({}: ProfileManagerProps) {
         bio: data.bio || '',
         avatar: data.avatar || '',
         twitchStatus: data.twitchStatus || 'offline',
+        mainText: data.mainText || data.name || '',
+        subtitle: data.subtitle || '',
+        featuredWorksTitle: data.featuredWorksTitle || '',
+        featuredWorksSubtitle: data.featuredWorksSubtitle || '',
         socialLinks: {
           twitch: data.socialLinks?.twitch || '',
           twitter: data.socialLinks?.twitter || '',
@@ -136,6 +144,10 @@ export default function ProfileManager({}: ProfileManagerProps) {
           bio: formData.bio.trim(),
           avatar: avatarUrl,
           twitchStatus: formData.twitchStatus,
+          mainText: formData.mainText.trim() || undefined,
+          subtitle: formData.subtitle.trim() || undefined,
+          featuredWorksTitle: formData.featuredWorksTitle.trim() || undefined,
+          featuredWorksSubtitle: formData.featuredWorksSubtitle.trim() || undefined,
           socialLinks: {
             twitch: formData.socialLinks.twitch.trim() || undefined,
             twitter: formData.socialLinks.twitter.trim() || undefined,
@@ -240,6 +252,41 @@ export default function ProfileManager({}: ProfileManagerProps) {
           />
         </div>
 
+        {/* Main Text (Hero Title) */}
+        <div>
+          <label className="block text-sm font-medium text-[var(--purple-glow)] mb-2">
+            Main Hero Text
+          </label>
+          <input
+            type="text"
+            value={formData.mainText}
+            onChange={(e) => setFormData({ ...formData, mainText: e.target.value })}
+            className="w-full px-4 py-2 bg-[var(--purple-darker)]/50 border border-[var(--purple-primary)]/30 rounded-lg text-[var(--purple-glow)] placeholder:text-[var(--purple-glow)]/40 focus:outline-none focus:border-[var(--purple-primary)] transition-colors"
+            placeholder="Enter main hero text (defaults to name if empty)"
+          />
+          <p className="text-xs text-[var(--purple-glow)]/60 mt-1">This is the large text displayed in the hero section</p>
+        </div>
+
+        {/* Subtitle */}
+        <div>
+          <label className="block text-sm font-medium text-[var(--purple-glow)] mb-2">
+            Subtitle
+          </label>
+          <input
+            type="text"
+            value={formData.subtitle}
+            onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
+            dir="auto"
+            className="w-full px-4 py-2 bg-[var(--purple-darker)]/50 border border-[var(--purple-primary)]/30 rounded-lg text-[var(--purple-glow)] placeholder:text-[var(--purple-glow)]/40 focus:outline-none focus:border-[var(--purple-primary)] transition-colors"
+            placeholder="Enter subtitle text (supports Arabic and English)"
+            style={{ 
+              fontFamily: 'var(--font-sans), Arial, Helvetica, sans-serif',
+              unicodeBidi: 'plaintext'
+            }}
+          />
+          <p className="text-xs text-[var(--purple-glow)]/60 mt-1">Subtitle displayed below the main hero text</p>
+        </div>
+
         {/* Bio */}
         <div>
           <label className="block text-sm font-medium text-[var(--purple-glow)] mb-2">
@@ -257,6 +304,34 @@ export default function ProfileManager({}: ProfileManagerProps) {
               fontFamily: 'var(--font-sans), Arial, Helvetica, sans-serif',
               unicodeBidi: 'plaintext'
             }}
+          />
+        </div>
+
+        {/* Featured Works Section Title */}
+        <div>
+          <label className="block text-sm font-medium text-[var(--purple-glow)] mb-2">
+            Featured Works Section Title
+          </label>
+          <input
+            type="text"
+            value={formData.featuredWorksTitle}
+            onChange={(e) => setFormData({ ...formData, featuredWorksTitle: e.target.value })}
+            className="w-full px-4 py-2 bg-[var(--purple-darker)]/50 border border-[var(--purple-primary)]/30 rounded-lg text-[var(--purple-glow)] placeholder:text-[var(--purple-glow)]/40 focus:outline-none focus:border-[var(--purple-primary)] transition-colors"
+            placeholder="Featured Works"
+          />
+        </div>
+
+        {/* Featured Works Section Subtitle */}
+        <div>
+          <label className="block text-sm font-medium text-[var(--purple-glow)] mb-2">
+            Featured Works Section Subtitle
+          </label>
+          <input
+            type="text"
+            value={formData.featuredWorksSubtitle}
+            onChange={(e) => setFormData({ ...formData, featuredWorksSubtitle: e.target.value })}
+            className="w-full px-4 py-2 bg-[var(--purple-darker)]/50 border border-[var(--purple-primary)]/30 rounded-lg text-[var(--purple-glow)] placeholder:text-[var(--purple-glow)]/40 focus:outline-none focus:border-[var(--purple-primary)] transition-colors"
+            placeholder="© Digital Showcase"
           />
         </div>
 
